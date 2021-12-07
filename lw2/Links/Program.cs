@@ -111,9 +111,9 @@ namespace Links
 
                 return new Answer(html, url, status);
             }
-            catch (Exception e)
+            catch (WebException e)
             {
-                throw e;
+                return new Answer("", url, ((HttpWebResponse)e.Response).StatusCode);
             }
         }
 
