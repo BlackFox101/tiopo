@@ -104,6 +104,19 @@ function addService() {
                     }
                 }
             ]
+        },
+        {
+            responses: [
+                {
+                    is: {
+                        statusCode: 404,
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify("Route not found")
+                    }
+                }
+            ]
         }
     ];
 
