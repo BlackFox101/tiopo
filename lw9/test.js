@@ -3,6 +3,18 @@ import chai from 'chai';
 import validator from './productValidator.js';
 import { Product } from './product.js';
 
+import categoryId0 from './data/invalid/categoryId0.js';
+import categoryId16 from './data/invalid/categoryId16.js';
+import hit2 from './data/invalid/hit2.js';
+import hitMinus1 from './data/invalid/hit-1.js';
+import status2 from './data/invalid/status2.js';
+import statusMinus1 from './data/invalid/status-1.js';
+import invalidTypes from './data/invalid/invalidTypes.js';
+
+import validProduct1 from './data/valid/validProduct1.js';
+import validProduct2 from './data/valid/validProduct2.js';
+import validProductAlias from './data/valid/validProductAlias.js';
+
 const baseUrl = 'http://91.210.252.240:9010/api';
 const request = supertest(baseUrl);
 const assert = chai.assert;
@@ -13,24 +25,19 @@ function productIsValid(jsonProduct) {
     return validator.productIsValid(product);
 }
 
-const temp = {
-    id: "4412",
-    category_id: "10",
-    title: "rolex",
-    alias: "rolex-0-0-0-0-0-0-0-0-0",
-    content: "content",
-    price: "100",
-    old_price: "70",
-    status: "1",
-    keywords: "casio",
-    description: "123",
-    img: "no_image.jpg",
-    hit: "1",
-    cat: "Epos"
+async function checkExistProductWithId(id) {
+    const response = await request.get('/products');
+    const existingIds = [];
+    response.body.forEach(r => {
+        existingIds.push(parseInt(r.id));
+    })
+    return existingIds.includes(id);
 }
 
+const addedProductIds = [];
+
 describe('Testing products Api', () => {
-    it('GET /products ', async () => {
+    it('Список всех товаров (GET)', async () => {
         const response = await request.get("/products");
         assert.isNotEmpty(response.body);
         response.body.forEach(r => {
@@ -38,7 +45,147 @@ describe('Testing products Api', () => {
             assert.isTrue(res, 'id: ' + r.id + ' - invalid');
         })
     });
-    it('temp', () => {
-        console.log('product: ' + productIsValid(temp));
+});
+
+describe('Добавить не валидный продукт', () => {
+    it('category_id 0 - не добавится',  async () => {
+        const response = await request.post('/addproduct')
+            .send(categoryId0);
+        addedProductIds.push(response.body.id);
+        expect(response.statusCode).to.equal(200);
+        assert(!await checkExistProductWithId(response.body.id), 'Не валидный продукт c id: ' + response.body.id + ' - добавлен');
+    });
+    it('category_id 16 - не добавится', async () => {
+        const response = await request.post('/addproduct')
+            .send(categoryId16);
+        addedProductIds.push(response.body.id);
+        expect(response.statusCode).to.equal(200);
+        assert(!await checkExistProductWithId(response.body.id), 'Не валидный продукт c id: ' + response.body.id + ' - добавлен');
+    });
+    it('hit 2 - не добавится', async () => {
+        const response = await request.post('/addproduct')
+            .send(hit2);
+        addedProductIds.push(response.body.id);
+        expect(response.statusCode).to.equal(200);
+        console.log(response.body);
+        assert(!await checkExistProductWithId(response.body.id), 'Не валидный продукт c id: ' + response.body.id + ' - добавлен');
+    });
+    it('hit -1 - не добавится', async () => {
+        const response = await request.post('/addproduct')
+            .send(hitMinus1);
+        addedProductIds.push(response.body.id);
+        expect(response.statusCode).to.equal(200);
+        assert(!await checkExistProductWithId(response.body.id), 'Не валидный продукт c id: ' + response.body.id + ' - добавлен');
+    });
+    it('status 2 - не добавится', async () => {
+        const response = await request.post('/addproduct')
+            .send(status2);
+        addedProductIds.push(response.body.id);
+        expect(response.statusCode).to.equal(200);
+        assert(!await checkExistProductWithId(response.body.id), 'Не валидный продукт c id: ' + response.body.id + ' - добавлен');
+    });
+    it('status -1 - не добавится', async () => {
+        const response = await request.post('/addproduct')
+            .send(statusMinus1);
+        addedProductIds.push(response.body.id);
+        expect(response.statusCode).to.equal(200);
+        assert(!await checkExistProductWithId(response.body.id), 'Не валидный продукт c id: ' + response.body.id + ' - добавлен');
+    });
+    it('invalid types - не добавится', async () => {
+        const response = await request.post('/addproduct')
+            .send(invalidTypes);
+        addedProductIds.push(response.body.id);
+        expect(response.statusCode).to.equal(200);
+        assert(!await checkExistProductWithId(response.body.id), 'Не валидный продукт c id: ' + response.body.id + ' - добавлен');
     });
 });
+
+describe('Добавить валидный продукт и удалить', () => {
+    const addedProductIds = [];
+
+    it('Валидный продукт - категория 1', async () => {
+        const response = await request.post('/addproduct')
+            .send(validProduct1);
+        addedProductIds.push(response.body.id);
+        expect(response.statusCode).to.equal(200);
+        addedProductIds.push(response.body.id);
+        assert(await checkExistProductWithId(response.body.id), 'Валидный продукт c id: ' + response.body.id + ' - отсутствует');
+    });
+    it('Валидный продукт - категория 15', async () => {
+        const response = await request.post('/addproduct')
+            .send(validProduct2);
+        addedProductIds.push(response.body.id);
+        expect(response.statusCode).to.equal(200);
+        addedProductIds.push(response.body.id);
+        assert(await checkExistProductWithId(response.body.id), 'Валидный продукт c id: ' + response.body.id + ' - отсутствует');
+    });
+    it('Валидный продукт - алиас', async () => {
+        const response = await request.post('/addproduct')
+            .send(validProductAlias);
+        addedProductIds.push(response.body.id);
+        expect(response.statusCode).to.equal(200);
+        addedProductIds.push(response.body.id);
+        assert(await checkExistProductWithId(response.body.id), 'Валидный продукт c id: ' + response.body.id + ' - отсутствует');
+    });
+});
+
+describe('Удалить продукт', () => {
+    it('Удалить существущий продукт ', async () => {
+        const response = await request.post('/addproduct')
+            .send(validProduct1);
+        assert(await checkExistProductWithId(response.body.id), 'Валидный продукт c id: ' + response.body.id + ' - отсутствует');
+        request.get('/deleteproduct')
+            .query({id: response.body.id})
+            .expect(200)
+            .then(res => {
+                assert(res.body.status === 1)
+            })
+    });
+    it('Удалить несуществущий продукт ', async () => {
+        request.get('/deleteproduct')
+            .query({id: -1})
+            .expect(200)
+            .then(res => {
+                assert(res.body.status === 0)
+            })
+    });
+});
+
+describe('Редактировать продукт', () => {
+    it('добавить и отредактировать ', async () => {
+        const addedProduct = await request.post('/addproduct')
+            .send(validProduct1);
+        addedProductIds.push(addedProduct.body.id);
+        const edit = {
+            id: addedProduct.body.id,
+            category_id: 2,
+            title: 'тест 4000',
+            alias: 'test 5000',
+            content: 'content 2',
+            price: 500,
+            old_price: 100,
+            status: 1,
+            keywords: 'keyword 2',
+            description: 'description 2',
+            hit: 1
+        }
+        const response = await request.post('/editproduct').send(edit);
+        const products = await request.get('/products');
+        const editProduct = products.body.find(r => parseInt(r.id) === parseInt(addedProduct.body.id));
+        assert(parseInt(editProduct.category_id) !== validProduct1.category_id, 'category_id не изменился');
+        assert(editProduct.title !== validProduct1.title, 'title не изменился');
+        assert(editProduct.alias !== validProduct1.alias, 'alias не изменился');
+        assert(editProduct.content !== validProduct1.content, 'content не изменился');
+        assert(parseInt(editProduct.price) !== validProduct1.price, 'price не изменился');
+        assert(parseInt(editProduct.old_price) !== validProduct1.old_price, 'old_price не изменился');
+        assert(parseInt(editProduct.status) !== validProduct1.status, 'status не изменился');
+        assert(editProduct.keywords !== validProduct1.keywords, 'keywords не изменился');
+        assert(editProduct.description !== validProduct1.description, 'description не изменился');
+        assert(parseInt(editProduct.hit) !== validProduct1.hit, 'hit не изменился');
+    });
+})
+
+addedProductIds.forEach(key => {
+    request.get('/deleteproduct').query({id: key})
+        .then(r => {})
+})
