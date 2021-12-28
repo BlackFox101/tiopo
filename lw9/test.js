@@ -36,7 +36,7 @@ async function checkExistProductWithId(id) {
 
 const addedProductIds = [];
 
-describe('Testing products Api', () => {
+/*describe('Testing products Api', () => {
     it('Список всех товаров (GET)', async () => {
         const response = await request.get("/products");
         assert.isNotEmpty(response.body);
@@ -45,10 +45,25 @@ describe('Testing products Api', () => {
             assert.isTrue(res, 'id: ' + r.id + ' - invalid');
         })
     });
+});*/
+
+describe('Проверка алиаса', () => {
+    it('Добавить продукт с таким же title, будет -0', async () => {
+        const addProduct1 = await request.post('/addproduct')
+            .send(validProduct1);
+        addedProductIds.push(addProduct1.body.id);
+        const addProduct2 = await request.post('/addproduct')
+            .send(validProduct1);
+        addedProductIds.push(addProduct2.body.id);
+        const products = await request.get('/products');
+        const product = await products.body.find(r => parseInt(r.id) === parseInt(addProduct2.body.id));
+        console.log(product);
+        assert(product.alias === 'test-test-test10-0')
+    });
 });
 
 describe('Добавить не валидный продукт', () => {
-    it('category_id 0 - не добавится',  async () => {
+    /*it('category_id 0 - не добавится',  async () => {
         const response = await request.post('/addproduct')
             .send(categoryId0);
         addedProductIds.push(response.body.id);
@@ -97,10 +112,82 @@ describe('Добавить не валидный продукт', () => {
         addedProductIds.push(response.body.id);
         expect(response.statusCode).to.equal(200);
         assert(!await checkExistProductWithId(response.body.id), 'Не валидный продукт c id: ' + response.body.id + ' - добавлен');
+    });*/
+    it('category_id = null - не добавиться', async () => {
+        const newProduct = {...validProduct1};
+        newProduct.category_id = null;
+        const response = await request.post('/addproduct')
+            .send(newProduct);
+        addedProductIds.push(response.body.id);
+        assert(!await checkExistProductWithId(response.body.id), 'Не валидный продукт c id: ' + response.body.id + ' - добавлен');
+    });
+    it('title = null - не добавиться', async () => {
+        const newProduct = {...validProduct1};
+        newProduct.title = null;
+        const response = await request.post('/addproduct')
+            .send(newProduct);
+        addedProductIds.push(response.body.id);
+        assert(!await checkExistProductWithId(response.body.id), 'Не валидный продукт c id: ' + response.body.id + ' - добавлен');
+    });
+    it('alias = null - не добавиться', async () => {
+        const newProduct = {...validProduct1};
+        newProduct.alias = null;
+        const response = await request.post('/addproduct')
+            .send(newProduct);
+        addedProductIds.push(response.body.id);
+        assert(!await checkExistProductWithId(response.body.id), 'Не валидный продукт c id: ' + response.body.id + ' - добавлен');
+    });
+    it('price = null - не добавиться', async () => {
+        const newProduct = {...validProduct1};
+        newProduct.price = null;
+        const response = await request.post('/addproduct')
+            .send(newProduct);
+        addedProductIds.push(response.body.id);
+        assert(!await checkExistProductWithId(response.body.id), 'Не валидный продукт c id: ' + response.body.id + ' - добавлен');
+    });
+    it('old_price = null - не добавиться', async () => {
+        const newProduct = {...validProduct1};
+        newProduct.old_price = null;
+        const response = await request.post('/addproduct')
+            .send(newProduct);
+        addedProductIds.push(response.body.id);
+        assert(!await checkExistProductWithId(response.body.id), 'Не валидный продукт c id: ' + response.body.id + ' - добавлен');
+    });
+    it('status = null - не добавиться', async () => {
+        const newProduct = {...validProduct1};
+        newProduct.status = null;
+        const response = await request.post('/addproduct')
+            .send(newProduct);
+        addedProductIds.push(response.body.id);
+        assert(!await checkExistProductWithId(response.body.id), 'Не валидный продукт c id: ' + response.body.id + ' - добавлен');
+    });
+    it('keywords = null - не добавиться', async () => {
+        const newProduct = {...validProduct1};
+        newProduct.keywords = null;
+        const response = await request.post('/addproduct')
+            .send(newProduct);
+        addedProductIds.push(response.body.id);
+        assert(!await checkExistProductWithId(response.body.id), 'Не валидный продукт c id: ' + response.body.id + ' - добавлен');
+    });
+    it('description = null - не добавиться', async () => {
+        const newProduct = {...validProduct1};
+        newProduct.description = null;
+        const response = await request.post('/addproduct')
+            .send(newProduct);
+        addedProductIds.push(response.body.id);
+        assert(!await checkExistProductWithId(response.body.id), 'Не валидный продукт c id: ' + response.body.id + ' - добавлен');
+    });
+    it('hit = null - не добавиться', async () => {
+        const newProduct = {...validProduct1};
+        newProduct.hit = null;
+        const response = await request.post('/addproduct')
+            .send(newProduct);
+        addedProductIds.push(response.body.id);
+        assert(!await checkExistProductWithId(response.body.id), 'Не валидный продукт c id: ' + response.body.id + ' - добавлен');
     });
 });
 
-describe('Добавить валидный продукт и удалить', () => {
+/*describe('Добавить валидный продукт и удалить', () => {
     const addedProductIds = [];
 
     it('Валидный продукт - категория 1', async () => {
@@ -183,9 +270,14 @@ describe('Редактировать продукт', () => {
         assert(editProduct.description !== validProduct1.description, 'description не изменился');
         assert(parseInt(editProduct.hit) !== validProduct1.hit, 'hit не изменился');
     });
-})
+});*/
 
-addedProductIds.forEach(key => {
-    request.get('/deleteproduct').query({id: key})
-        .then(r => {})
-})
+describe('Очистить все добавленные продукты', () => {
+    it('Удалить ', function () {
+        console.log(addedProductIds);
+        /*addedProductIds.forEach(key => {
+            request.get('/deleteproduct').query({id: key})
+                .then(r => {})
+        });*/
+    });
+});
